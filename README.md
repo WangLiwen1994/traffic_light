@@ -3,7 +3,6 @@ This repo is a simple module (**depends on the OpenCV package only**) to recogni
 
 ## Dependency
 - python 3
-- numpy
 - opencv
 
 ## Installation
@@ -11,16 +10,18 @@ To prepare the environment, it needs to install the dependent packages as listed
 ```bash
 conda create --name traffic_light python=3.5 -y
 conda activate traffic_light
-pip install opencv-python, numpy
+pip install opencv-python
 ```
 ## Quick start
 In the required python environment, clone the repo, and run the 'demo.py'.
 ```bash
 git clone https://github.com/WangLiwen1994/traffic_light.git
 cd traffic_light
+
 python demo.py
 ```
 You can see the result displayed by a window like: text denotes the color of the traffic light, the value is the confidence score (probability).
+
 ![Result](result.jpg)
 
 
@@ -31,7 +32,6 @@ from demo import TrafficLight
 
 m_light = TrafficLight(position=[xL, yT, xR, yB]) # set the position of the traffic light
 signal, prob = m_light.getSignal(img_bgr) # input the opencv image with the format of "BGR", then you can obtain the output
-
-# where "signal" stores the text of the signal name, "prob" stores the probability of the prediction. 
+# "signal" stores the text of the signal name, "prob" stores the probability of the prediction. 
 
 ```

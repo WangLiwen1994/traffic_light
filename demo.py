@@ -35,7 +35,7 @@ class TrafficLight():
         signal, prob = pred_red_green_yellow(traffic_path_std, isDebug)  # red yellow green
         return signal, prob
 
-    def showResult(self, frame, isLabelBottom=False, isDebug=False, color=(255, 255, 255)):
+    def showResult(self, frame, isLabelBottom=False, isDebug=False, color=(0, 255, 0)):
         signal, prob = self.getSignal(frame, isDebug)
         s = signal + ':%.2f' % (prob)
         if isLabelBottom:  # sometimes the traffic lights are crowd, the text need to label at different position to avoid overlaping
