@@ -10,6 +10,7 @@ class TrafficLight():
         #             in that case, the predifined position need to fit the resized image.
 
         self.position = (np.asarray(position) / zoom_ratio).astype(int)
+        self.process_size = (20,50)
         self.isDebug = False
         return
 
@@ -31,7 +32,7 @@ class TrafficLight():
 
         light_region = self.cropfromimage(frame)
         if self.isDebug: cv2.imshow('traffic light', light_region)
-        traffic_path_std = cv2.resize(light_region, (32, 32))
+        traffic_path_std = cv2.resize(light_region, self.process_size)
         signal, prob = pred_red_green_yellow(traffic_path_std, isDebug)  # red yellow green
         return signal, prob
 

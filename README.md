@@ -31,7 +31,11 @@ just copy "Traffic_Light_Classifier.py" and "demo.py"(change another name) to yo
 from demo import TrafficLight
 
 m_light = TrafficLight(position=[xL, yT, xR, yB]) # set the position of the traffic light
-signal, prob = m_light.getSignal(img_bgr) # input the opencv image with the format of "BGR", then you can obtain the output
-# "signal" stores the text of the signal name, "prob" stores the probability of the prediction. 
+
+signal, prob = m_light.getSignal(img_bgr) # input the opencv image with the format of "BGR"
+# "signal" stores the text of the signal name,
+# "prob" stores the probability of the prediction. 
+
+
 
 ```

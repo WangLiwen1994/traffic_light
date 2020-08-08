@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 
+
 # The function is modified based on the package "https://github.com/thedch/traffic-light-classifier"
 # The modification contains: we refine the decision process, of which:
 #       1) the prediction is a soft decision that is based on probability.
@@ -69,7 +70,7 @@ def findNonZero(rgb_image):
     return counter
 
 
-def pred_red_green_yellow(bgr_image, isdebug=False):
+def pred_red_green_yellow(bgr_image, isdebug=False, process_size=(20, 50)):
     '''Determines the Red, Green, and Yellow content in each image using HSV and
     experimentally determined thresholds. Returns a classification based on the
     values.
@@ -80,8 +81,8 @@ def pred_red_green_yellow(bgr_image, isdebug=False):
     sum_saturation = np.sum(hsv[:, :, 1])  #
     sum_bright = np.sum(hsv[:, :, 2])
 
-    area = float(32 * 32)
-    #avg_saturation = sum_saturation / area  # Find the average
+    area = float(process_size[0] * process_size[1])
+    # avg_saturation = sum_saturation / area  # Find the average
     avg_bright = sum_bright / area
 
     sat_low = 25  # int(avg_saturation * 1.3)
@@ -109,7 +110,6 @@ def pred_red_green_yellow(bgr_image, isdebug=False):
     upper_red = np.array([5, 255, 255])
     red_mask = cv2.inRange(hsv, lower_red, upper_red)
     red_result_2 = cv2.bitwise_and(rgb_image, rgb_image, mask=red_mask)
-
 
     sum_green = findNonZero(green_result)
     sum_yellow = findNonZero(yellow_result)
