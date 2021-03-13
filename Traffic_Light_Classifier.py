@@ -56,18 +56,10 @@ def highest_sat_pixel(rgb_image):
         return 1, 0  # Red has a higher content
     return 0, 1
 
-
 def findNonZero(rgb_image):
-    rows, cols, _ = rgb_image.shape
-    counter = 0
-
-    for row in range(rows):
-        for col in range(cols):
-            pixel = rgb_image[row, col]
-            if sum(pixel) != 0:
-                counter = counter + 1
-
-    return counter
+    # 2021-03-13, Liwen modified for fast speed
+    rgb_sum = np.sum(rgb_image,axis=2)
+    return np.count_nonzero(rgb_sum)
 
 
 def pred_red_green_yellow(bgr_image, isdebug=False, process_size=(20, 50)):
@@ -76,9 +68,8 @@ def pred_red_green_yellow(bgr_image, isdebug=False, process_size=(20, 50)):
     values.
     The hue value is ranged from 0 to 180 defined by OpenCV, where it is a half of the real hue value.
     '''
-    rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
-    hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
-    sum_saturation = np.sum(hsv[:, :, 1])  #
+    #rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+    hsv = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
     sum_bright = np.sum(hsv[:, :, 2])
 
     area = float(process_size[0] * process_size[1])
@@ -92,24 +83,24 @@ def pred_red_green_yellow(bgr_image, isdebug=False, process_size=(20, 50)):
     lower_green = np.array([70, sat_low, val_low])
     upper_green = np.array([90, 255, 255])
     green_mask = cv2.inRange(hsv, lower_green, upper_green)
-    green_result = cv2.bitwise_and(rgb_image, rgb_image, mask=green_mask)
+    green_result = cv2.bitwise_and(bgr_image, bgr_image, mask=green_mask)
 
     # Yellow (may need further refinement for your case)
     lower_yellow = np.array([5, sat_low, val_low])
     upper_yellow = np.array([20, 255, 255])
     yellow_mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-    yellow_result = cv2.bitwise_and(rgb_image, rgb_image, mask=yellow_mask)
+    yellow_result = cv2.bitwise_and(bgr_image, bgr_image, mask=yellow_mask)
 
     # Red (has two Hue range, may need further refinement for your case)
     lower_red = np.array([160, sat_low, val_low])
     upper_red = np.array([180, 255, 255])
     red_mask = cv2.inRange(hsv, lower_red, upper_red)
-    red_result_1 = cv2.bitwise_and(rgb_image, rgb_image, mask=red_mask)
+    red_result_1 = cv2.bitwise_and(bgr_image, bgr_image, mask=red_mask)
 
     lower_red = np.array([0, sat_low, val_low])
     upper_red = np.array([5, 255, 255])
     red_mask = cv2.inRange(hsv, lower_red, upper_red)
-    red_result_2 = cv2.bitwise_and(rgb_image, rgb_image, mask=red_mask)
+    red_result_2 = cv2.bitwise_and(bgr_image, bgr_image, mask=red_mask)
 
     sum_green = findNonZero(green_result)
     sum_yellow = findNonZero(yellow_result)
