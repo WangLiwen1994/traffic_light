@@ -8,6 +8,7 @@ import cv2
 #       2) the thresholds of Hue, Saturation, Brightness are refined for Hong Kong trasportation system.
 #          You may define your threshold based on your cases.
 #       3) refined definition of hue (red has two parts).
+# 2021-03-16, liwen modified the threshold and speed up calculation
 
 def create_feature(rgb_image):
     '''Basic brightness feature, required by Udacity'''
@@ -56,19 +57,27 @@ def highest_sat_pixel(rgb_image):
         return 1, 0  # Red has a higher content
     return 0, 1
 
+
 def findNonZero(rgb_image):
     # 2021-03-13, Liwen modified for fast speed
-    rgb_sum = np.sum(rgb_image,axis=2)
-    return np.count_nonzero(rgb_sum)
+    if rgb_image.ndim == 3:
+        rgb_sum = np.sum(rgb_image, axis=2)
+        return np.count_nonzero(rgb_sum)
+    else:
+        return np.count_nonzero(rgb_image)
 
+
+Pix_A_Light = (50-10)*(20-5)/3*1.3
+Min_Pix_A_Light = (50-10)*(20-5)/3*0.8
 
 def pred_red_green_yellow(bgr_image, isdebug=False, process_size=(20, 50)):
+    global Pix_A_Light
     '''Determines the Red, Green, and Yellow content in each image using HSV and
     experimentally determined thresholds. Returns a classification based on the
     values.
     The hue value is ranged from 0 to 180 defined by OpenCV, where it is a half of the real hue value.
     '''
-    #rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+    # rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
     hsv = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
     sum_bright = np.sum(hsv[:, :, 2])
 
@@ -78,33 +87,36 @@ def pred_red_green_yellow(bgr_image, isdebug=False, process_size=(20, 50)):
 
     sat_low = 25  # int(avg_saturation * 1.3)
     val_low = int(avg_bright * 1.3)  # 140
+    kernel = np.ones((7, 7), np.uint8)
 
     # green (may need further refinement for your case)
-    lower_green = np.array([70, sat_low, val_low])
-    upper_green = np.array([90, 255, 255])
+    lower_green = np.array([60, sat_low, val_low])
+    upper_green = np.array([90, 256, 256])
     green_mask = cv2.inRange(hsv, lower_green, upper_green)
-    green_result = cv2.bitwise_and(bgr_image, bgr_image, mask=green_mask)
 
     # Yellow (may need further refinement for your case)
     lower_yellow = np.array([5, sat_low, val_low])
-    upper_yellow = np.array([20, 255, 255])
-    yellow_mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-    yellow_result = cv2.bitwise_and(bgr_image, bgr_image, mask=yellow_mask)
+    upper_yellow = np.array([30, 256, 256])
+    yellow_mask_1 = cv2.inRange(hsv, lower_yellow, upper_yellow)
+    yellow_mask = yellow_mask_1
 
     # Red (has two Hue range, may need further refinement for your case)
     lower_red = np.array([160, sat_low, val_low])
-    upper_red = np.array([180, 255, 255])
-    red_mask = cv2.inRange(hsv, lower_red, upper_red)
-    red_result_1 = cv2.bitwise_and(bgr_image, bgr_image, mask=red_mask)
+    upper_red = np.array([180, 256, 256])
+    red_mask_1 = cv2.inRange(hsv, lower_red, upper_red)
 
     lower_red = np.array([0, sat_low, val_low])
-    upper_red = np.array([5, 255, 255])
-    red_mask = cv2.inRange(hsv, lower_red, upper_red)
-    red_result_2 = cv2.bitwise_and(bgr_image, bgr_image, mask=red_mask)
+    upper_red = np.array([7, 256, 256])
+    red_mask_2 = cv2.inRange(hsv, lower_red, upper_red)
+    red_mask = red_mask_1 + red_mask_2
 
-    sum_green = findNonZero(green_result)
-    sum_yellow = findNonZero(yellow_result)
-    sum_red = findNonZero(red_result_1) + findNonZero(red_result_2)
+    green_mask= cv2.morphologyEx(green_mask, cv2.MORPH_CLOSE, kernel)
+    yellow_mask = cv2.morphologyEx(yellow_mask, cv2.MORPH_CLOSE, kernel)
+    red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
+
+    sum_green = findNonZero(green_mask)
+    sum_yellow = findNonZero(yellow_mask)
+    sum_red = findNonZero(red_mask)
 
     sum = float(sum_green + sum_yellow + sum_red)
     if sum < 10: return ['Unknow', 0]  # low-confidence prediction
@@ -118,9 +130,14 @@ def pred_red_green_yellow(bgr_image, isdebug=False, process_size=(20, 50)):
     label = ['Red', "Yellow", "Green"]
 
     # soft decision
-    if out_prob > 0.8:
+    if out_prob > 0.95:  # high confidence
+        if (label[int(decision)] == 'Red'):
+            Pix_A_Light = max((score[int(decision)]+50*Pix_A_Light)/51, Min_Pix_A_Light)
         return [label[int(decision)], prob[decision]]
-    elif (prob[0] + prob[1]) > 0.8:
+    elif Pix_A_Light is not None and (score[0] + score[1]) > 1.1*Pix_A_Light and prob[1] > 0.1 and (
+            prob[0] + prob[1]) > 0.8:
         return ['Red=>Yellow', prob[0] + prob[1]]
+    elif label[int(decision)] == "Yellow" and out_prob > 0.55:
+        return ["Yellow", out_prob]
     else:
         return [label[int(decision)], prob[decision]]
