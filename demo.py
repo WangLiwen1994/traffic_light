@@ -1,16 +1,16 @@
 import cv2
 import numpy as np
-from Traffic_Light_Classifier import pred_red_green_yellow
+from Traffic_Light_Classifier import Traffic_light_classifier
 
 
-class TrafficLight():
-    def __init__(self, position, zoom_ratio=1.0):
+class TrafficLight(Traffic_light_classifier):
+    def __init__(self, position, zoom_ratio=1.0, nSignal=3, process_size=(20, 50), isVideoBased=False):
         # in position: 4-d vector, [xL,yT,xR,yB], define the position of the traffic light
         # zoom-ratio: default is 1. Sometimes the image is resized for visualization or other process,
         #             in that case, the predifined position need to fit the resized image.
-
+        super().__init__(nSignal=nSignal, process_size=process_size, isVideoBased=isVideoBased)
         self.position = (np.asarray(position) / zoom_ratio).astype(int)
-        self.process_size = (20,50)
+        self.process_size = process_size
         self.isDebug = False
         return
 
@@ -32,8 +32,8 @@ class TrafficLight():
 
         light_region = self.cropfromimage(frame)
         if self.isDebug: cv2.imshow('traffic light', light_region)
-        traffic_path_std = cv2.resize(light_region, self.process_size)
-        signal, prob = pred_red_green_yellow(traffic_path_std, isDebug)  # red yellow green
+        traffic_path_std = cv2.resize(light_region, self.process_size, interpolation=cv2.INTER_CUBIC)
+        signal, prob = self.pred_red_green_yellow(traffic_path_std, isDebug)  # red yellow green
         return signal, prob
 
     def showResult(self, frame, isLabelBottom=False, isDebug=False, color=(0, 255, 0)):
@@ -52,10 +52,10 @@ if __name__ == '__main__':
     img_in = cv2.imread("./test_img.jpg")
 
     # define the position of the traffic light: [xL,yT,xR,yB]
-    m_light_1 = TrafficLight(position=[20, 108, 103, 351])
-    m_light_2 = TrafficLight(position=[166, 106, 255, 348])
-    m_light_3 = TrafficLight(position=[313, 111, 412, 354])
-    m_light_4 = TrafficLight(position=[472, 109, 568, 355])
+    m_light_1 = TrafficLight(position=[20, 108, 103, 351], isVideoBased=False)
+    m_light_2 = TrafficLight(position=[166, 106, 255, 348], isVideoBased=False)
+    m_light_3 = TrafficLight(position=[313, 111, 412, 354], isVideoBased=False)
+    m_light_4 = TrafficLight(position=[472, 109, 568, 355], isVideoBased=False)
 
     # visualize the result. To get the raw signal information, use the "getSignal" function.
     res_visual = m_light_1.showResult(img_in)
